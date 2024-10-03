@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="MPH Logger"
+        prefix="module-logger"
+        doc:description="This module relies entirely in runtime provided components (no other Plugin dependencies)"
+		
+        xmlns="http://www.mulesoft.org/schema/mule/module"
+        xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+        xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.mulesoft.org/schema/mule/module http://www.mulesoft.org/schema/mule/module/current/mule-module.xsd">
+
+    <property name="appName" displayName="Application Name" type="string"  doc:description="Application name" defaultValue="#[app.name]"/>
+    <property name="appVersion" displayName="Application Version"  type="string"  doc:description="Application version"/>
+    <property name="environment" displayName="Environment" type="string" defaultValue="#[Mule::p('mule.env')]"  doc:description="Execution environment name, typically loaded in a runtime property i.e: mule.env"/>
+    <property name="host" displayName="Host" type="string"  doc:description="Host" defaultValue="#[server.host]"/>
+    <property name="category" displayName="Category" type="string"  doc:description="Category" use="OPTIONAL"/>
+   
+    <property name="clusterId" displayName="Cluster Id " type="string"  doc:description="Cluster Id" defaultValue="#[mule.clusterId]"/>
+    <property name="nodeId" displayName="Node Id " type="string"  doc:description="Node Id" defaultValue="#[mule.nodeId]"/>
+    
+
+    <operation name="Start" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="INFO"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description=""/>
+ -->            <parameter name="message" use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+         	<parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="method" use="OPTIONAL" type="string"  defaultValue="#[attributes.method]" doc:description="Can contain attributes/payloads for logs, or exception payload for errors"/>
+       	    <parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       	  
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="start" value ='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  resourcePath: vars.resourcePath,
+  message: vars.message,
+  method: vars.method,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+			
+            <mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.start]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.start]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.start]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.start]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.start]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+        </body>
+   </operation>
+    <operation name="End" doc:description="Logs enforcing output format and content">
+    
+         <parameters>
+     
+          
+            <parameter name="level" type="LevelJsonType" defaultValue="INFO"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description=""/>
+ -->            <parameter name="message" use="OPTIONAL" type="string"  doc:description="message like payload or variable etc"/>
+         	<parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       		
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="end" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  resourcePath: vars.resourcePath,
+  category: vars.category,
+  message: vars.message,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+
+            <mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.end]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.end]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.end]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.end]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.end]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+        </body>
+    </operation>
+    
+      <operation name="BeforeRequest" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="INFO"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue="" /> 
+ -->            <parameter name="message" use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+          	<parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="outboundRequestType" type="RequestType" defaultValue="HTTP" doc:description="outbound request type like HTTP,SOAP etc"/>
+       		<parameter name="outboundMethodType" type="MethodType" defaultValue="GET" doc:description="outbound request method like GET,POST etc"/>
+       		<parameter name="sourceSystem" use="OPTIONAL" type="string" defaultValue="#[vars.inboundMessage.sourceSystem]" doc:description="source system"/>
+            <parameter name="targetSystem" use="OPTIONAL" type="string" defaultValue="#[vars.inboundMessage.targetSystem]" doc:description="target system"/>
+      		<parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       		
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="beforerequest" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  message: vars.message,
+  category: vars.category,
+  outbound_request_type: vars.outboundRequestType,
+  outbound_method: vars.outboundMethodType,
+  sourceSystem: vars.sourceSystem,
+  targetSystem: vars.targetSystem,
+  resourcePath: vars.resourcePath,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+				<mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.beforeRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.beforeRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.beforeRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.beforeRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.beforeRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+
+    </body>
+    </operation>
+    
+     <operation name="AfterRequest" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="INFO"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description="Specifies a category name that it adds to the log trace, before the output object. You might use a category to route your log messages, or you might set log levels based on category"/>
+ -->            <parameter name="message" use="OPTIONAL" defaultValue="" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+            <parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="outboundRequestType" type="RequestType" defaultValue="HTTP" doc:description="outbound request type like HTTP,SOAP etc"/>
+       		<parameter name="outboundResponse" type="ResponseResponseType" defaultValue="" use="OPTIONAL" doc:description="outbound request type like HTTP Status, Message Ack etc"/>
+            <parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+            <parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       		
+      		
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="afterRequest" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  message: vars.message,
+  category: vars.category,
+  outbound_request_type: vars.outboundRequestType,
+  outbound_response: vars.outboundResponse,
+  resourcePath: vars.resourcePath,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+				<mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.afterRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.afterRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.afterRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.afterRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.afterRequest]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+
+    </body>
+    </operation>
+    
+      <operation name="BeforeTransform" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="DEBUG"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description="Specifies a category name that it adds to the log trace, before the output object. You might use a category to route your log messages, or you might set log levels based on category"/>
+ -->            <parameter name="message" use="OPTIONAL" defaultValue='#[payload]' type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+            <parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="sourceTranform" use="OPTIONAL" type="string" doc:description="source transfrom like source json,csv etc"/>
+            <parameter name="targetTranform" use="OPTIONAL" type="string" doc:description="target transfrom like source json,csv etc"/>
+       		<parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       		
+      		
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="beforeTransform" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  category: vars.category,
+  message: vars.message,
+  correlationId: vars.correlationId,
+  resourcePath: vars.resourcePath,
+  sourceTranform: vars.sourceTranform,
+  targetTranform: vars.targetTranform,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+				
+				<mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.beforeTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.beforeTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.beforeTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.beforeTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.beforeTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+
+    </body>
+    </operation>
+    
+    
+    
+      <operation name="AfterTransform" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="DEBUG"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description="Specifies a category name that it adds to the log trace, before the output object. You might use a category to route your log messages, or you might set log levels based on category"/>
+ -->            <parameter name="message" use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+            <parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       	    <parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+       		
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="afterTransform" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  resourcePath: vars.resourcePath,
+  message: vars.message,
+  category: vars.category,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+				<mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.afterTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.afterTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.afterTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.afterTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.afterTransform]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+
+    </body>
+    </operation>
+    
+    
+    
+    
+     
+      <operation name="Exception" doc:description="Logs enforcing output format and content">
+         <parameters>
+            <parameter name="level" type="LevelJsonType" defaultValue="ERROR"/>
+<!--             <parameter name="category" use="OPTIONAL" type="string" defaultValue=""  doc:description="Specifies a category name that it adds to the log trace, before the output object. You might use a category to route your log messages, or you might set log levels based on category"/>
+ -->            <parameter name="message" use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+          	<parameter name="correlationId" type="string" doc:description="Unique identifier value that is attached to messages that allows reference to a particular transaction or event chain" defaultValue="#[vars.inboundMessage.correlationId]" />
+            <parameter name="errortype" defaultValue="#[error.errorType]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="errordesc" defaultValue="#[error.description]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="resourcePath" defaultValue="#[vars.inboundMessage.endpoint]"  use="OPTIONAL" type="string" doc:description="Free text to describe context of logging this log or exception entry"/>
+       		<parameter name="sizeOfPayload" defaultValue="#[sizeOf(vars.inboundMessage.originalPayload) default -1]"  use="OPTIONAL" type="string" doc:description="size of the payload"/>
+       		<parameter name="sourceSystem" use="OPTIONAL" type="string" defaultValue="#[vars.inboundMessage.sourceSystem]" doc:description="source system"/>
+            <parameter name="targetSystem" use="OPTIONAL" type="string" defaultValue="#[vars.inboundMessage.targetSystem]" doc:description="target system"/>
+            <parameter name="service" defaultValue="#[vars.inboundMessage.service]"  use="OPTIONAL" type="string" doc:description="service like lab order, patient details etc"/>
+      
+        </parameters>
+     
+        <body>
+            <mule:set-variable variableName="exception" value='#[output application/json skipNullOn = "everywhere", indent = false
+---
+{
+  level: vars.level,
+  timestamp: now(),
+  sizeOfPayload: vars.sizeOfPayload,
+  environment: vars.environment,
+  applicationName: vars.appName,
+  applicationVersion: vars.appVersion,
+  host: vars.host,
+  clusterId: vars.clusterId,
+  nodeId: vars.nodeId,
+  correlationId: vars.correlationId,
+  category: vars.category,
+  message: vars.message,
+  errorType: vars.errortype,
+  errorDescription: vars.errordesc,
+  resourcePath: vars.resourcePath,
+  sourceSystem: vars.sourceSystem,
+  targetSystem: vars.targetSystem,
+  service: vars.service
+}]' doc:name="Set Variable" doc:id="0c1d3cfe-c3a9-48cf-81c0-24a7b7580da6" />
+				  <mule:choice doc:name="Choice" doc:id="9b0c9b38-c09b-4beb-b078-110d07740ac3">
+                <mule:when expression='#[vars.level == "INFO"]'>
+                    <mule:logger level="INFO" doc:name="Logger" doc:id="aaa0da52-3fc5-4be5-8ced-70773e6c6c96" message="#[vars.exception]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "WARN"]'>
+                    <mule:logger level="WARN" doc:name="Logger" doc:id="c8755864-e9b5-448e-bc96-95be7f71f747" message="#[vars.exception]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "DEBUG"]'>
+                    <mule:logger level="DEBUG" doc:name="Logger" doc:id="430964c5-9d76-4f38-94e9-8bf43a5f19da" message="#[vars.exception]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "ERROR"]'>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="1abb6878-5795-49f0-a460-574f1ebbebd8" message="#[vars.exception]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:when expression='#[vars.level == "TRACE"]'>
+                    <mule:logger level="TRACE" doc:name="Logger" doc:id="e3199399-762f-4318-9a3c-bbab655ebfa4" message="#[vars.exception]" category="#[vars.category]"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:logger level="ERROR" doc:name="Logger" doc:id="7c176668-0227-4aee-b7cf-489bd1052ab2" message="Unknown log level received" category="#[vars.category]"/>
+                </mule:otherwise>
+            </mule:choice>
+
+    </body>
+    </operation>
+    
+    
+    
+ </module>

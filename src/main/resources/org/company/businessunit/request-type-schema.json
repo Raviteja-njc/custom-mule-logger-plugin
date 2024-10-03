@@ -1,0 +1,12 @@
+{
+        "type": "string",
+        "enum": [
+            "HTTP",
+            "Database",
+            "Messaging",
+            "SOAP",
+            "File",
+            "Other"
+        ]
+
+  }

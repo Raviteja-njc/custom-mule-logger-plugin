@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogs xmlns="http://www.mulesoft.org/schema/mule/types" >
+    <catalog name="LevelJsonType" format="application/json">
+        <schema format="application/json+schema" location="./level-schema.json" />
+    </catalog>
+     <catalog name="RequestType" format="application/json">
+        <schema format="application/json+schema" location="./request-type-schema.json" />
+    </catalog>
+      <catalog name="MethodType" format="application/json">
+        <schema format="application/json+schema" location="./method-type-schema.json" />
+    </catalog>
+      <catalog name="ResponseResponseType" format="application/json">
+        <schema format="application/json+schema" location="./request-response-schema.json" />
+    </catalog>
+</catalogs>

@@ -1,0 +1,9 @@
+{
+        "type": "string",
+        "enum": [
+            "attributes.statusCode",
+            "attributes.ackToken",
+            ""
+        ]
+
+  }
